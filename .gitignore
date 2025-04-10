@@ -2,3 +2,4 @@ deep_learning/**/*.png
 deep_learning/**/*.jpg
 deep_learning/**/*.jpeg
 deep_learning/**/*.gif
+deep_learning/fastaicourse/.gradio/certificate.pem
