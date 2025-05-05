@@ -19,7 +19,7 @@ num_heads = 12
 n_layer = 12
 # Hyper parameters
 
-with open('data/paul_graham_essays.txt', 'r', encoding='utf-8') as f:
+with open('data/output_chat.txt', 'r', encoding='utf-8') as f:
     text = f.read()
 
 print("Length of dataset: ", len(text))
