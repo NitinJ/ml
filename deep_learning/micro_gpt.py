@@ -1,22 +1,34 @@
-from httpx import head
-from numpy import block
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 torch.manual_seed(1337)
 
-# Hyper parameters
-batch_size = 64
-block_size = 1024
-max_iters = 5000
-eval_interval = 500
+# # Hyper parameters
+# batch_size = 64
+# block_size = 1024
+# max_iters = 5000
+# eval_interval = 500
+# learning_rate = 3e-4
+# device = 'cuda' if torch.cuda.is_available() else 'cpu'
+# eval_iters = 200
+# d_embed = 768
+# dropout = 0.2
+# num_heads = 12
+# n_layer = 12
+# # Hyper parameters
+
+# Hyper parameters for very basic testing.
+batch_size = 8
+block_size = 512
+max_iters = 100
+eval_interval = 25
 learning_rate = 3e-4
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-eval_iters = 200
-num_embeddings = 768
+eval_iters = 25
+d_embed = 256
 dropout = 0.2
-num_heads = 12
-n_layer = 12
+num_heads = 16
+n_layer = 4
 # Hyper parameters
 
 with open('data/output_chat.txt', 'r', encoding='utf-8') as f:
@@ -74,24 +86,30 @@ def estimate_loss():
 class Head(nn.Module):
     def __init__(self, head_size):
         super().__init__()
-        self.query = nn.Linear(num_embeddings, head_size, bias=False)
-        self.key = nn.Linear(num_embeddings, head_size, bias=False)
-        self.value = nn.Linear(num_embeddings, head_size, bias=False)
+        self.query = nn.Linear(d_embed, head_size, bias=False)
+        self.key = nn.Linear(d_embed, head_size, bias=False)
+        self.value = nn.Linear(d_embed, head_size, bias=False)
         self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
         self.dropout = nn.Dropout(dropout)
     
     def forward(self, x):
         B,T,C = x.shape
+        print(f"x.shape: {x.shape}")
+        # Compute query, key, value matrices
         k = self.key(x)     # (B, T, C)
         q = self.key(x)     # (B, T, C)
+
+        print("fq,k,v .shape: {q.shape}")
+
         # Compute attention scores
-        wei = q @ k.transpose(-2, -1) * C**-0.5 # (B, T, C) @ (B, C, T) -> (B, T, T)
+        wei = q @ k.transpose(-2, -1) * C**-0.5     # (B, T, C) @ (B, C, T) -> (B, T, T)
         wei = wei.masked_fill(self.tril[:T, :T] == 0, float('-inf'))
         wei = F.softmax(wei, dim=-1) # (B, T, T)
         wei = self.dropout(wei)
+
         # Perform weighted self aggregation on values
-        v = self.value(x)
-        out = wei @ v
+        v = self.value(x)   # (B, T, C)
+        out = wei @ v       # (B, T, T) @ (B, T, C) -> (B, T, C)
         return out
     
 
@@ -99,7 +117,7 @@ class MultiHeadAttention(nn.Module):
     def __init__(self, n_heads, head_size):
         super().__init__()
         self.heads = nn.ModuleList([Head(head_size) for _ in range(n_heads)])
-        self.projection = nn.Linear(num_embeddings, num_embeddings)
+        self.projection = nn.Linear(d_embed, d_embed)
         self.dropout = nn.Dropout(dropout)
     
     def forward(self, x):
@@ -109,12 +127,12 @@ class MultiHeadAttention(nn.Module):
 
 
 class FeedForward(nn.Module):
-    def __init__(self, num_embeddings):
+    def __init__(self, d_embed):
         super().__init__()
         self.sequential = nn.Sequential(
-            nn.Linear(num_embeddings, 4 * num_embeddings),
+            nn.Linear(d_embed, 4 * d_embed),
             nn.ReLU(),
-            nn.Linear(4 * num_embeddings, num_embeddings),
+            nn.Linear(4 * d_embed, d_embed),
             nn.Dropout(dropout)
         )
     
@@ -123,13 +141,13 @@ class FeedForward(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, num_embeddings, num_heads):
+    def __init__(self, d_embed, num_heads):
         super().__init__()
-        head_size = num_embeddings // num_heads
+        head_size = d_embed // num_heads
         self.sa = MultiHeadAttention(num_heads, head_size)
-        self.ffwd = FeedForward(num_embeddings)
-        self.ln1 = nn.LayerNorm(num_embeddings)
-        self.ln2 = nn.LayerNorm(num_embeddings)
+        self.ffwd = FeedForward(d_embed)
+        self.ln1 = nn.LayerNorm(d_embed)
+        self.ln2 = nn.LayerNorm(d_embed)
 
     def forward(self, x):
         x = x + self.sa(self.ln1(x))
@@ -141,17 +159,17 @@ class Block(nn.Module):
 class GPTLanguageModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.token_embedding_table = nn.Embedding(vocab_size, num_embeddings)
-        self.position_embedding_table = nn.Embedding(block_size, num_embeddings)
+        self.token_embedding_table = nn.Embedding(vocab_size, d_embed)
+        self.position_embedding_table = nn.Embedding(block_size, d_embed)
         self.blocks = nn.Sequential(\
-            *[Block(num_embeddings, num_heads=num_heads) for _ in range(n_layer)])
-        self.ln_f = nn.LayerNorm(num_embeddings)
-        self.lm_head = nn.Linear(num_embeddings, vocab_size)
+            *[Block(d_embed, num_heads=num_heads) for _ in range(n_layer)])
+        self.ln_f = nn.LayerNorm(d_embed)
+        self.lm_head = nn.Linear(d_embed, vocab_size)
     
     def forward(self, idx, targets=None):
         B, T = idx.shape
 
-        token_embedding =  self.token_embedding_table(idx) # (B, T, C)
+        token_embedding = self.token_embedding_table(idx) # (B, T, C)
         pos_embedding = self.position_embedding_table(torch.arange(T, device=device)) # (T, C)
         x = token_embedding + pos_embedding
         x = self.blocks(x)
