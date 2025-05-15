@@ -5,3 +5,4 @@ deep_learning/**/*.gif
 deep_learning/fastaicourse/.gradio/certificate.pem
 deep_learning/data/**
 **.pdf
+models/**
