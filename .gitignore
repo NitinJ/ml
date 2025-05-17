@@ -14,3 +14,4 @@ __pycache__/
 *.pyd
 *.db
 *.sqlite
+*.tar.gz
