@@ -1,0 +1,10 @@
+version: '3.9'
+
+services:
+  ml:
+    build: .
+    volumes:
+      - .:/ml
+    runtime: nvidia  # If you want GPU support
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all

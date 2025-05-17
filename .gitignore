@@ -7,3 +7,10 @@ deep_learning/data/**
 **.pdf
 deep_learning/models/**
 **/models/**
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite
