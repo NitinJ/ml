@@ -31,7 +31,7 @@ num_heads = 16
 n_layer = 4
 # Hyper parameters
 
-with open('data/output_chat.txt', 'r', encoding='utf-8') as f:
+with open('../data/output_chat.txt', 'r', encoding='utf-8') as f:
     text = f.read()
 
 print("Length of dataset: ", len(text))
