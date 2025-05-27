@@ -9,7 +9,7 @@ RUN conda env create -f environment.yml
 
 # Activate env, install pip deps
 COPY requirements.txt .
-RUN /bin/bash -c "source activate ml && pip install -r requirements.txt"
+RUN /bin/bash -c "conda activate ml && pip install -r requirements.txt"
 
 # Set path so environment is always active
 ENV PATH /opt/conda/envs/ml/bin:$PATH
