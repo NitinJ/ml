@@ -5,6 +5,7 @@
         "plaintext": false,
         "markdown": false,
         "scminput": false,
+        "json": false,
         "python": true
     }
 }

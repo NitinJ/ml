@@ -5,6 +5,7 @@ deep_learning/**/*.gif
 deep_learning/fastaicourse/.gradio/certificate.pem
 deep_learning/data/**
 **.pdf
+**/data/**
 deep_learning/models/**
 **/models/**
 .vscode/
