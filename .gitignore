@@ -16,3 +16,6 @@ __pycache__/
 *.db
 *.sqlite
 *.tar.gz
+*.pt
+**/experiments/**
+*.bin
