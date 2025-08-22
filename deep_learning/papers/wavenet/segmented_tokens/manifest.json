@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "num_samples": 66331,
+  "seq_len": 32000,
+  "dtype": "int64",
+  "shard_size": 10000,
+  "shards": [
+    "shard_00000.pt",
+    "shard_00001.pt",
+    "shard_00002.pt",
+    "shard_00003.pt",
+    "shard_00004.pt",
+    "shard_00005.pt",
+    "shard_00006.pt"
+  ],
+  "shard_sizes": [
+    10000,
+    10000,
+    10000,
+    10000,
+    10000,
+    10000,
+    6331
+  ]
+}
