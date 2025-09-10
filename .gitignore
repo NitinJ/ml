@@ -19,3 +19,4 @@ __pycache__/
 *.pt
 **/experiments/**
 *.bin
+*.env
